@@ -6,11 +6,28 @@
 
 enum class Direction { UP, DOWN, LEFT, RIGHT };
 
-struct Position {
+struct Position
+{
     int x, y;
 };
 
-class GameEngine {
+struct GameState {
+    int steps;
+    int score;
+    Position headPosition;
+    Position tailPosition;
+    Position foodPosition;
+    int distanceToFood;
+    int distanceToLeftWall;
+    int distanceToRightWall;
+    int distanceToTopWall;
+    int distanceToBottomWall;
+    Direction currentDirection;
+    bool isGameOver;
+};
+
+class GameEngine
+{
 public:
     GameEngine(int width, int height);
     void Step(); // Advances the game by one tick

@@ -2,76 +2,102 @@
 #include "GameEngine.hpp"
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 GameEngine::GameEngine(int width, int height)
-    : width(width), height(height), score(0), gameOver(false), currentDirection(Direction::RIGHT) {
-    // Initialize the snake's starting position
+    : width(width), height(height), score(0), gameOver(false), steps(0), currentDirection(Direction::RIGHT)
+{
     snake.push_back({width / 2, height / 2});
-
-    // Seed the random number generator to spawn food randomly
     std::srand(std::time(nullptr));
     SpawnFood();
 }
 
-void GameEngine::Step() {
-    if (!gameOver) {
-        MoveSnake();     // Move the snake according to the current direction
-        CheckCollision(); // Check for collisions (self or walls)
+void GameEngine::Step()
+{
+    if (!gameOver)
+    {
+        MoveSnake();
+        CheckCollision();
+        steps++;
     }
 }
 
-void GameEngine::ChangeDirection(Direction newDir) {
-    // Prevent reversing direction directly
+void GameEngine::ChangeDirection(Direction newDir)
+{
     if ((currentDirection == Direction::UP && newDir != Direction::DOWN) ||
         (currentDirection == Direction::DOWN && newDir != Direction::UP) ||
         (currentDirection == Direction::LEFT && newDir != Direction::RIGHT) ||
-        (currentDirection == Direction::RIGHT && newDir != Direction::LEFT)) {
+        (currentDirection == Direction::RIGHT && newDir != Direction::LEFT))
+    {
         currentDirection = newDir;
     }
 }
 
-void GameEngine::MoveSnake() {
-    // Calculate the new head position based on the current direction
+void GameEngine::MoveSnake()
+{
     Position newHead = snake.front();
-    switch (currentDirection) {
+    switch (currentDirection)
+    {
         case Direction::UP:    newHead.y -= 1; break;
         case Direction::DOWN:  newHead.y += 1; break;
         case Direction::LEFT:  newHead.x -= 1; break;
         case Direction::RIGHT: newHead.x += 1; break;
     }
 
-    // Insert the new head position to the front of the snake
     snake.insert(snake.begin(), newHead);
 
-    // Check if the snake has eaten the food
-    if (newHead.x == food.x && newHead.y == food.y) {
+    if (newHead.x == food.x && newHead.y == food.y)
+    {
         score++;
-        SpawnFood(); // Generate new food if snake eats the current one
-    } else {
-        // If no food was eaten, remove the tail (standard snake movement)
-        snake.pop_back();
+        SpawnFood();
+    }
+    else
+    {
+        snake.pop_back(); // Standard snake movement, remove tail
     }
 }
 
-void GameEngine::CheckCollision() {
+void GameEngine::CheckCollision()
+{
     Position head = snake.front();
-    
-    // Check if the snake hits the walls
-    if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
+    if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height)
         gameOver = true;
-    }
 
-    // Check if the snake hits itself
-    for (size_t i = 1; i < snake.size(); i++) {
-        if (snake[i].x == head.x && snake[i].y == head.y) {
+    for (size_t i = 1; i < snake.size(); i++)
+    {
+        if (snake[i].x == head.x && snake[i].y == head.y)
+        {
             gameOver = true;
             break;
         }
     }
 }
 
-void GameEngine::SpawnFood() {
-    // Generate a random position for the food within the game bounds
+void GameEngine::SpawnFood()
+{
     food.x = std::rand() % width;
     food.y = std::rand() % height;
 }
+
+GameState GameEngine::GetGameState() const
+{
+    GameState state;
+    state.steps = steps;
+    state.score = score;
+    state.headPosition = snake.front();
+    state.tailPosition = snake.back();
+    state.foodPosition = food;
+
+    // Calculating distances
+    state.distanceToFood = std::abs(snake.front().x - food.x) + std::abs(snake.front().y - food.y);
+    state.distanceToLeftWall = snake.front().x;
+    state.distanceToRightWall = width - snake.front().x - 1;
+    state.distanceToTopWall = snake.front().y;
+    state.distanceToBottomWall = height - snake.front().y - 1;
+
+    state.currentDirection = currentDirection;
+    state.isGameOver = gameOver;
+
+    return state;
+}
+
